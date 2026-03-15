@@ -74,8 +74,8 @@ export const loginUser = async (req, res) => {
  */
 export const getUser = async (req, res) => {
     try {
-        const { _id, name, email } = req.user;
-        return res.status(200).json({ success: true, user: { _id, name, email } });
+        const { _id, name, email, credits } = req.user;
+        return res.status(200).json({ success: true, user: { _id, name, email, credits } });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -92,47 +92,45 @@ export const getPublishedImages = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const publishedImages = await Chat.aggregate([
-            // Only process chats that have at least one published image
-            {
-                $match: {
-                    "messages.isImage": true,
-                    "messages.isPublished": true,
-                }
-            },
-            // Flatten messages array
+            // flatten messages first
             { $unwind: "$messages" },
-            // Filter to only published image messages
+
+            // filter only published images
             {
                 $match: {
                     "messages.isImage": true,
-                    "messages.isPublished": true,
+                    "messages.isPublished": true
                 }
             },
-            // Join with User collection to get userName
+
+            // join users collection
             {
                 $lookup: {
                     from: "users",
                     localField: "userId",
                     foreignField: "_id",
-                    as: "user",
+                    as: "user"
                 }
             },
-            // Flatten the user array from lookup
-            { $unwind: { path: "$user", preserveNullAndEmpty: false } },
-            // Sort newest first inside the pipeline
+
+            { $unwind: "$user" },
+
+            // sort newest first
             { $sort: { "messages.timestamp": -1 } },
-            // Pagination
+
+            // pagination
             { $skip: skip },
             { $limit: limit },
-            // Shape the final output
+
+            // final output
             {
                 $project: {
                     _id: 0,
                     imageUrl: "$messages.content",
                     timestamp: "$messages.timestamp",
-                    userName: "$user.name",
+                    userName: "$user.name"
                 }
-            },
+            }
         ]);
 
         return res.status(200).json({ success: true, page, limit, images: publishedImages });
