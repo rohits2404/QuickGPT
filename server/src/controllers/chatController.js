@@ -27,7 +27,6 @@ export const getChats = async (req, res) => {
 
         // Exclude messages array — not needed for a chat list view
         const chats = await Chat.find({ userId })
-            .select("-messages")
             .sort({ updatedAt: -1 });
 
         return res.status(200).json({ success: true, chats });
