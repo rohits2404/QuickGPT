@@ -47,7 +47,7 @@ export const textMessageController = async (req, res) => {
 
         // Call AI
         const { choices } = await AI.chat.completions.create({
-            model: "openai/gpt-oss-20b",
+            model: "openai/gpt-oss-120b",
             messages: [{ role: "user", content: prompt.trim() }],
         });
 
